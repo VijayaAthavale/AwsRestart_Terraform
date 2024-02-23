@@ -88,6 +88,7 @@ output "ec2rendered" {
 }
 
 output "public_ip" {
-  value = aws_instance.instance[0].public_ip
+  #value = aws_instance.instance[0].public_ip
+  value = aws_instance.dev_instance.public_ip
 }
 
