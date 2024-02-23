@@ -56,5 +56,38 @@ resource "aws_security_group" "dev_sg" {
   cidr_blocks     = ["0.0.0.0/0"]
  }
 }
+#create EC2 instance
+resource "aws_instance" "dev_instance" {
+ ami           = "ami-0b898040803850657"
+ instance_type = "t2.micro"
+ key_name      = "vockey"
+ subnet_id     = aws_subnet.dev_subnet.id
+ vpc_security_group_ids = [aws_security_group.dev_sg.id]
+ associate_public_ip_address = true
+ tags    = {
+  name   = "deham10"
+ }
+}
 
+#user_data = file("userdata.sh")
+  user_data = "${base64encode(data.template_file.ec2userdatatemplate.rendered)}"
+
+
+  provisioner "local-exec" {
+    command = "echo Instance Type = ${self.instance_type}, Instance ID = ${self.id}, Public IP = ${self.public_ip}, AMI ID = ${self.ami} >> metadata"
+  }
+}
+
+
+data "template_file" "ec2userdatatemplate" {
+  template = "${file("userdata.tpl")}"
+}
+
+output "ec2rendered" {
+  value = "${data.template_file.ec2userdatatemplate.rendered}"
+}
+
+output "public_ip" {
+  value = aws_instance.instance[0].public_ip
+}
 
