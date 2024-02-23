@@ -58,7 +58,7 @@ resource "aws_security_group" "dev_sg" {
 }
 #create EC2 instance
 resource "aws_instance" "dev_instance" {
- ami           = "ami-0b898040803850657"
+ ami           = "ami-0d442a425e2e0a743"
  instance_type = "t2.micro"
  key_name      = "vockey"
  subnet_id     = aws_subnet.dev_subnet.id
