@@ -6,7 +6,20 @@ resource "aws_vpc" "dev_vpc" {
  tags    = {
   name   = "deham10"
  }
+
 }
+# Create an internet gateway to give our subnet access to the outside world
+resource "aws_internet_gateway" "dev_igw" {
+ vpc_id = aws_vpc.dev_vpc.id
+ tags    = {
+  name   = "deham10"
+ }
+}
+
+
+
+
+
 #resource "aws_internet_gateway" "cpstn_IGW"{
  #   vpc_id                 = aws_vpc.dev_vpc.id
   #  tags                   = {
