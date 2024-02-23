@@ -1,94 +1,77 @@
-# Create a VPC to launch our instances into
+locals {
+    #Name of the vpc
+  Name="awsRestartVPC"
+
+}
+
+#Create VPC with tag awsRestartVPC
 resource "aws_vpc" "dev_vpc" {
- cidr_block = "10.0.0.0/16"
- enable_dns_hostnames = true
- enable_dns_support = true
- tags    = {
-  name   = "deham10"
- }
-
+  cidr_block = var.VPC_CIDR
+  enable_dns_hostnames = "true"
+  enable_dns_support = "true"
+  instance_tenancy = "default"
+  tags = {
+    Name = "awsRestartVPC"
+  }
 }
-# Create an internet gateway to give our subnet access to the outside world
+#Create Internet Gateway with tag awsRestartIGW
 resource "aws_internet_gateway" "dev_igw" {
- vpc_id = aws_vpc.dev_vpc.id
- tags    = {
-  name   = "deham10"
- }
+  vpc_id = aws_vpc.dev_vpc.id
+  tags = {
+    Name = "awsRestartIGW"
+  }
 }
-# Grant the VPC internet access on its main route table
-resource "aws_route" "internet_access" {
- route_table_id         = aws_vpc.dev_vpc.main_route_table_id
- destination_cidr_block = "0.0.0.0/0"
- gateway_id             = aws_internet_gateway.dev_igw.id
+#Create Route Table with tag awsRestartRT
+resource "aws_route_table" "dev_rt" {
+  vpc_id = aws_vpc.dev_vpc.id
+  tags = {
+    Name = "awsRestartRT"
+  }
 }
-# Create a subnet to launch our instances into
+#Create Route with tag awsRestartRoute
+resource "aws_route" "dev_route" {
+  route_table_id = aws_route_table.dev_rt.id
+  destination_cidr_block = var.CIDR_BLOCK
+  gateway_id = aws_internet_gateway.dev_igw.id
+}
+#Create Public Subnet1 with tag awsRestartSubnet
 resource "aws_subnet" "dev_subnet" {
- vpc_id                  = aws_vpc.dev_vpc.id
- cidr_block              = "10.0.1.0/24"
- map_public_ip_on_launch = true
- availability_zone       = "us-west-2a"
- tags    = {
-  name   = "deham10"
- }
+  vpc_id = aws_vpc.dev_vpc.id
+  cidr_block = var.PUBLIC_SUBNET_CIDR
+  tags = {
+    Name = "awsRestartSubnet"
+  }
 }
-# Our default security group to access
-# the instances over SSH and HTTP
+#Associate Public Subnet1 with Route Table
+resource "aws_route_table_association" "dev_rt_association" {
+    subnet_id = aws_subnet.dev_subnet.id
+  route_table_id = aws_route_table.dev_rt.id
+}
+#Create Security Group with tag awsRestartSG
 resource "aws_security_group" "dev_sg" {
- name        = "deham10"
- description = "Used in the terraform"
- vpc_id      = aws_vpc.dev_vpc.id
- ingress {
-  from_port   = 22
-  to_port     = 22
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
- }
- ingress {
-  from_port   = 80
-  to_port     = 80
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
- }
- egress {
-  from_port       = 0
-  to_port         = 0
-  protocol        = "-1"
-  cidr_blocks     = ["0.0.0.0/0"]
- }
-}
-#create EC2 instance
-resource "aws_instance" "dev_instance" {
- ami           = "ami-0d442a425e2e0a743"
- instance_type = "t2.micro"
- key_name      = "vockey"
- subnet_id     = aws_subnet.dev_subnet.id
- vpc_security_group_ids = [aws_security_group.dev_sg.id]
- associate_public_ip_address = true
- tags    = {
-  name   = "deham10"
- }
+  name = "awsRestartSG"
+  vpc_id = aws_vpc.dev_vpc.id
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = [var.CIDR_BLOCK]
+  }
+  ingress {
+    from_port = 80
+    to_port = 80
+    protocol = "Http"
+    cidr_blocks = [var.CIDR_BLOCK]
+  }
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = [var.CIDR_BLOCK]
+  }
+  tags = {
+    Name = "awsRestartSG"
+  }
 }
 
-#user_data = file("userdata.sh")
-#user_data = "${base64encode(data.template_file.ec2userdatatemplate.rendered)}"
-
-
-#provisioner "local-exec" {
- #   command = "echo Instance Type = ${self.instance_type}, Instance ID = ${self.id}, Public IP = ${self.public_ip}, AMI ID = ${self.ami} >> metadata"
- #} 
-#}
-
-
-data "template_file" "ec2userdatatemplate" {
-  template = "${file("userdata.tpl")}"
-}
-
-output "ec2rendered" {
-  value = "${data.template_file.ec2userdatatemplate.rendered}"
-}
-
-output "public_ip" {
-  #value = aws_instance.instance[0].public_ip
-  value = aws_instance.dev_instance.public_ip
-}
 
