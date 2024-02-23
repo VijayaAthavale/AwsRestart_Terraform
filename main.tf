@@ -70,13 +70,13 @@ resource "aws_instance" "dev_instance" {
 }
 
 #user_data = file("userdata.sh")
-user_data = "${base64encode(data.template_file.ec2userdatatemplate.rendered)}"
+#user_data = "${base64encode(data.template_file.ec2userdatatemplate.rendered)}"
 
 
-provisioner "local-exec" {
-    command = "echo Instance Type = ${self.instance_type}, Instance ID = ${self.id}, Public IP = ${self.public_ip}, AMI ID = ${self.ami} >> metadata"
- } 
-}
+#provisioner "local-exec" {
+ #   command = "echo Instance Type = ${self.instance_type}, Instance ID = ${self.id}, Public IP = ${self.public_ip}, AMI ID = ${self.ami} >> metadata"
+ #} 
+#}
 
 
 data "template_file" "ec2userdatatemplate" {
